@@ -14,7 +14,16 @@ interface ArtikelItem {
     kategori?: { nama_kategori: string };
 }
 
-export default function Dashboard({ artikel = [] }: { artikel?: ArtikelItem[] }) {
+interface CeritaItem {
+    cerita_id: number;
+    judul_cerita: string;
+    status: string;
+    status_progres: 'berlangsung' | 'tamat';
+    views: number;
+    jumlah_bab: number;
+}
+
+export default function Dashboard({ artikel = [], cerita = [] }: { artikel?: ArtikelItem[]; cerita?: CeritaItem[] }) {
     const statusColor = (status: string) => {
         const styles: Record<string, string> = {
             published: '#1f7a3f',
@@ -116,6 +125,69 @@ export default function Dashboard({ artikel = [] }: { artikel?: ArtikelItem[] })
                                                     HAPUS
                                                 </button>
                                             </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    {/* Cerita saya */}
+                    <div className="mb-4 mt-10 flex items-center justify-between">
+                        <p className="font-mono text-xs tracking-wider text-gray-500">CERITA SAYA</p>
+                        <Link
+                            href={route('publisher.cerita.create')}
+                            className="px-4 py-2 font-mono text-xs tracking-wider text-white hover:opacity-90"
+                            style={{ ...clipPanelSm, backgroundColor: accent }}
+                        >
+                            TULIS CERITA
+                        </Link>
+                    </div>
+
+                    <div className="overflow-hidden bg-white shadow" style={{ ...clipPanel, border: `1px solid ${accentBorder}` }}>
+                        <table className="min-w-full divide-y text-sm" style={{ borderColor: accentBorder }}>
+                            <thead className="bg-[#faf7f8] text-left font-mono text-[10px] tracking-wider text-gray-500">
+                                <tr>
+                                    <th className="px-4 py-3">JUDUL</th>
+                                    <th className="px-4 py-3">STATUS</th>
+                                    <th className="px-4 py-3">PROGRES</th>
+                                    <th className="px-4 py-3">BAB</th>
+                                    <th className="px-4 py-3">VIEWS</th>
+                                    <th className="px-4 py-3">AKSI</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y" style={{ borderColor: accentBorder }}>
+                                {cerita.length === 0 && (
+                                    <tr>
+                                        <td colSpan={6} className="px-4 py-6 text-center text-gray-400">
+                                            Belum ada cerita. Mulai tulis cerita pertamamu.
+                                        </td>
+                                    </tr>
+                                )}
+                                {cerita.map((item) => (
+                                    <tr key={item.cerita_id}>
+                                        <td className="px-4 py-3">{item.judul_cerita}</td>
+                                        <td className="px-4 py-3">
+                                            <span
+                                                className="rounded px-2 py-1 font-mono text-[10px] tracking-wider"
+                                                style={{ backgroundColor: statusBg(item.status), color: statusColor(item.status) }}
+                                            >
+                                                {item.status.toUpperCase()}
+                                            </span>
+                                        </td>
+                                        <td className="px-4 py-3 font-mono text-xs text-gray-500">
+                                            {item.status_progres === 'berlangsung' ? 'BERLANGSUNG' : 'TAMAT'}
+                                        </td>
+                                        <td className="px-4 py-3">{item.jumlah_bab}</td>
+                                        <td className="px-4 py-3">{item.views}</td>
+                                        <td className="px-4 py-3">
+                                            <Link
+                                                href={route('publisher.cerita.kelola', item.cerita_id)}
+                                                className="font-mono text-xs hover:underline"
+                                                style={{ color: accent }}
+                                            >
+                                                KELOLA
+                                            </Link>
                                         </td>
                                     </tr>
                                 ))}

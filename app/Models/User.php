@@ -52,6 +52,18 @@ class User extends Authenticatable
         return $this->hasMany(Rating::class, 'user_id', 'user_id');
     }
 
+    // Relasi: satu user (publisher) bisa punya banyak cerita
+    public function cerita()
+    {
+        return $this->hasMany(Cerita::class, 'user_id', 'user_id');
+    }
+
+    // Relasi: satu user bisa memberi banyak rating cerita
+    public function ratingCerita()
+    {
+        return $this->hasMany(RatingCerita::class, 'user_id', 'user_id');
+    }
+
     // Helper cek role
     public function isAdmin(): bool
     {

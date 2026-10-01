@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Banner;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -14,56 +15,75 @@ class BannerController extends Controller
     public function index(): Response
     {
         return Inertia::render('Admin/Banner/Index', [
-            'banner' => Banner::orderBy('urutan')->get(),
+            'banners' => Banner::orderBy('urutan', 'asc')->get(),
         ]);
     }
 
     public function store(Request $request): RedirectResponse
     {
-        $request->validate([
-            'judul' => ['required', 'string', 'max:255'],
-            'gambar' => ['required', 'image', 'max:3072'],
-            'link_url' => ['nullable', 'string', 'max:500'],
+        $validated = $request->validate([
+            'judul'     => ['required', 'string', 'max:255'],
+            'deskripsi' => ['nullable', 'string'], // Validasi deskripsi
+            'gambar'    => ['required', 'image', 'max:2048'],
+            'link_url'  => ['nullable', 'url', 'max:255'],
+            'urutan'    => ['nullable', 'integer', 'min:0'],
+            'aktif'     => ['required', 'boolean'],
         ]);
 
         $path = $request->file('gambar')->store('banner', 'public');
-        $urutanTerakhir = Banner::max('urutan') ?? 0;
 
         Banner::create([
-            'judul' => $request->judul,
-            'gambar' => $path,
-            'link_url' => $request->link_url,
-            'urutan' => $urutanTerakhir + 1,
+            'judul'     => $validated['judul'],
+            'deskripsi' => $validated['deskripsi'] ?? null,
+            'gambar'    => $path,
+            'link_url'  => $validated['link_url'] ?? null,
+            'urutan'    => $validated['urutan'] ?? 0,
+            'aktif'     => $validated['aktif'],
         ]);
 
-        return back()->with('success', 'Banner berhasil ditambahkan.');
+        return redirect()->back()->with('success', 'Banner berhasil ditambahkan.');
     }
 
-    public function toggleAktif(Banner $banner): RedirectResponse
+    public function update(Request $request, Banner $banner): RedirectResponse
     {
-        $banner->update(['aktif' => ! $banner->aktif]);
-
-        return back()->with('success', 'Status banner diperbarui.');
-    }
-
-    public function updateUrutan(Request $request): RedirectResponse
-    {
-        $request->validate([
-            'urutan' => ['required', 'array'],
-            'urutan.*' => ['required', 'integer', 'exists:banner,banner_id'],
+        $validated = $request->validate([
+            'judul'     => ['required', 'string', 'max:255'],
+            'deskripsi' => ['nullable', 'string'],
+            'gambar'    => ['nullable', 'image', 'max:2048'], // Boleh kosong saat edit
+            'link_url'  => ['nullable', 'url', 'max:255'],
+            'urutan'    => ['nullable', 'integer', 'min:0'],
+            'aktif'     => ['required', 'boolean'],
         ]);
 
-        foreach ($request->urutan as $index => $bannerId) {
-            Banner::where('banner_id', $bannerId)->update(['urutan' => $index]);
+        $path = $banner->gambar;
+        if ($request->hasFile('gambar')) {
+            // Hapus gambar lama dari storage jika diganti gambar baru
+            if ($banner->gambar) {
+                Storage::disk('public')->delete($banner->gambar);
+            }
+            $path = $request->file('gambar')->store('banner', 'public');
         }
 
-        return back()->with('success', 'Urutan banner diperbarui.');
+        $banner->update([
+            'judul'     => $validated['judul'],
+            'deskripsi' => $validated['deskripsi'] ?? null,
+            'gambar'    => $path,
+            'link_url'  => $validated['link_url'] ?? null,
+            'urutan'    => $validated['urutan'] ?? 0,
+            'aktif'     => $validated['aktif'],
+        ]);
+
+        return redirect()->back()->with('success', 'Banner berhasil diperbarui.');
     }
 
     public function destroy(Banner $banner): RedirectResponse
     {
+        if ($banner->gambar) {
+            Storage::disk('public')->delete($banner->gambar);
+        }
+
         $banner->delete();
 
-        return back()->with('success', 'Banner dihapus.');
+        return redirect()->back()->with('success', 'Banner berhasil dihapus.');
     }
 }

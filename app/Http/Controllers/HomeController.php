@@ -22,7 +22,11 @@ class HomeController extends Controller
                 });
             })
             ->when($request->kategori, function ($query, $kategoriId) {
-                $query->where('kategori_id', $kategoriId);
+                // Kalau yang dipilih kategori induk, ikutkan juga artikel di sub-kategorinya.
+                $ids = Kategori::where('kategori_id', $kategoriId)
+                    ->orWhere('parent_id', $kategoriId)
+                    ->pluck('kategori_id');
+                $query->whereIn('kategori_id', $ids);
             })
             ->withCount(['likes', 'rating'])
             ->latest('tanggal_publikasi')
@@ -30,8 +34,11 @@ class HomeController extends Controller
 
         return Inertia::render('Home', [
             'artikel' => $artikel,
-            'kategori' => Kategori::orderBy('nama_kategori')->get(['kategori_id', 'nama_kategori']),
-            'banner' => Banner::aktif()->get(['banner_id', 'judul', 'gambar', 'link_url']),
+            'kategori' => Kategori::utama()
+                ->with('children:kategori_id,parent_id,nama_kategori')
+                ->orderBy('nama_kategori')
+                ->get(['kategori_id', 'nama_kategori']),
+            'banner' => Banner::aktif()->get(['banner_id', 'judul', 'deskripsi', 'gambar', 'link_url']),
             'filters' => $request->only('search', 'kategori'),
         ]);
     }

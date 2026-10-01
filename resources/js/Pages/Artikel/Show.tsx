@@ -18,6 +18,8 @@ interface ArtikelData {
     gambar: string | null;
     tanggal_publikasi: string;
     views: number;
+    sumber: string;
+    genre: string | null;
     penulis?: { nama_lengkap: string };
     kategori?: { nama_kategori: string };
 }
@@ -154,12 +156,17 @@ export default function Show({
                                 )}
                                 <div className="p-6">
                                     <p className="font-mono text-[10px] tracking-wider text-gray-400">
-                                        {artikel.kategori?.nama_kategori?.toUpperCase()} ::{' '}
+                                        {artikel.kategori?.nama_kategori?.toUpperCase()}
+                                        {artikel.genre && <> :: {artikel.genre.toUpperCase()}</>} ::{' '}
                                         {new Date(artikel.tanggal_publikasi).toLocaleDateString('id-ID').replace(/\//g, '.')}{' '}
                                         :: {artikel.views} VIEWS
                                     </p>
                                     <h1 className="mt-2 text-2xl font-semibold text-gray-800">{artikel.judul_artikel}</h1>
-                                    <p className="mt-1 text-sm text-gray-500">oleh {artikel.penulis?.nama_lengkap}</p>
+                                    <p className="mt-1 text-sm text-gray-500">
+                                        oleh {artikel.penulis?.nama_lengkap}
+                                        <span className="mx-1.5 text-gray-300">|</span>
+                                        Sumber: {artikel.sumber}
+                                    </p>
 
                                     <div
                                         className="prose prose-sm mt-4 max-w-none text-gray-700 prose-headings:text-gray-800 prose-a:text-[#a8265c] prose-strong:text-gray-800"

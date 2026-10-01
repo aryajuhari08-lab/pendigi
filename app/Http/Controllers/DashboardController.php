@@ -22,6 +22,7 @@ class DashboardController extends Controller
             'admin' => Inertia::render('Admin/Dashboard', $this->statistikAdmin()),
             'publisher' => Inertia::render('Publisher/Dashboard', [
                 'artikel' => $user->artikel()->with('kategori')->latest()->get(),
+                'cerita' => $user->cerita()->withCount(['bab as jumlah_bab'])->latest()->get(),
             ]),
             default => redirect()->route('home'),
         };

@@ -1,10 +1,13 @@
 <?php
 
 use App\Http\Controllers\Admin\PengajuanController;
+use App\Http\Controllers\CeritaController as CeritaPublikController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Publisher\ArtikelController;
+use App\Http\Controllers\Publisher\BabController;
+use App\Http\Controllers\Publisher\CeritaController as PublisherCeritaController;
 use App\Http\Controllers\InteraksiController;
 use App\Http\Controllers\Admin\KategoriController;
 use App\Http\Controllers\Admin\BannerController;
@@ -36,6 +39,15 @@ Route::middleware('auth')->group(function () {
     Route::post('/komentar/{komentar}/balas', [InteraksiController::class, 'balasKomentar'])->name('komentar.balas');
 });
 
+// Cerita (publik, siapa saja bisa baca)
+Route::get('/cerita', [CeritaPublikController::class, 'index'])->name('cerita.index');
+Route::get('/cerita/{cerita:cerita_id}', [CeritaPublikController::class, 'show'])->name('cerita.show');
+Route::get('/cerita/{cerita:cerita_id}/baca/{bab}', [CeritaPublikController::class, 'baca'])->name('cerita.baca');
+
+Route::middleware('auth')->group(function () {
+    Route::post('/cerita/{cerita}/rating', [InteraksiController::class, 'ratingCerita'])->name('cerita.rating');
+});
+
 // Khusus Admin
 Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/kategori', [KategoriController::class, 'index'])->name('kategori.index');
@@ -58,10 +70,17 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::put('/moderasi-komentar/{komentar}/approve', [ModerasiController::class, 'approveKomentar'])->name('moderasi.komentar.approve');
     Route::put('/moderasi-komentar/{komentar}/reject', [ModerasiController::class, 'rejectKomentar'])->name('moderasi.komentar.reject');
 
+    Route::get('/moderasi-cerita', [ModerasiController::class, 'cerita'])->name('moderasi.cerita');
+    Route::put('/moderasi-cerita/{cerita}/approve', [ModerasiController::class, 'approveCerita'])->name('moderasi.cerita.approve');
+    Route::put('/moderasi-cerita/{cerita}/reject', [ModerasiController::class, 'rejectCerita'])->name('moderasi.cerita.reject');
+
+    Route::get('/moderasi-bab', [ModerasiController::class, 'bab'])->name('moderasi.bab');
+    Route::put('/moderasi-bab/{bab}/approve', [ModerasiController::class, 'approveBab'])->name('moderasi.bab.approve');
+    Route::put('/moderasi-bab/{bab}/reject', [ModerasiController::class, 'rejectBab'])->name('moderasi.bab.reject');
+
     Route::get('/banner', [BannerController::class, 'index'])->name('banner.index');
     Route::post('/banner', [BannerController::class, 'store'])->name('banner.store');
-    Route::put('/banner/{banner}/toggle', [BannerController::class, 'toggleAktif'])->name('banner.toggle');
-    Route::put('/banner/urutan', [BannerController::class, 'updateUrutan'])->name('banner.urutan');
+    Route::put('/banner/{banner}', [BannerController::class, 'update'])->name('banner.update');
     Route::delete('/banner/{banner}', [BannerController::class, 'destroy'])->name('banner.destroy');
 
     Route::get('/daftar-nis', [DaftarNisController::class, 'index'])->name('daftarNis.index');
@@ -76,6 +95,20 @@ Route::middleware(['auth', 'role:publisher'])->prefix('publisher')->name('publis
     Route::get('/artikel/{artikel}/edit', [ArtikelController::class, 'edit'])->name('artikel.edit');
     Route::put('/artikel/{artikel}', [ArtikelController::class, 'update'])->name('artikel.update');
     Route::delete('/artikel/{artikel}', [ArtikelController::class, 'destroy'])->name('artikel.destroy');
+
+    Route::get('/cerita/buat', [PublisherCeritaController::class, 'create'])->name('cerita.create');
+    Route::post('/cerita', [PublisherCeritaController::class, 'store'])->name('cerita.store');
+    Route::get('/cerita/{cerita}', [PublisherCeritaController::class, 'kelola'])->name('cerita.kelola');
+    Route::get('/cerita/{cerita}/edit', [PublisherCeritaController::class, 'edit'])->name('cerita.edit');
+    Route::put('/cerita/{cerita}', [PublisherCeritaController::class, 'update'])->name('cerita.update');
+    Route::put('/cerita/{cerita}/toggle-progres', [PublisherCeritaController::class, 'toggleProgres'])->name('cerita.toggleProgres');
+    Route::delete('/cerita/{cerita}', [PublisherCeritaController::class, 'destroy'])->name('cerita.destroy');
+
+    Route::get('/cerita/{cerita}/bab/buat', [BabController::class, 'create'])->name('bab.create');
+    Route::post('/cerita/{cerita}/bab', [BabController::class, 'store'])->name('bab.store');
+    Route::get('/bab/{bab}/edit', [BabController::class, 'edit'])->name('bab.edit');
+    Route::put('/bab/{bab}', [BabController::class, 'update'])->name('bab.update');
+    Route::delete('/bab/{bab}', [BabController::class, 'destroy'])->name('bab.destroy');
 });
 
 require __DIR__.'/auth.php';

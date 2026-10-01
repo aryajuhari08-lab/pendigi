@@ -4,6 +4,7 @@ import { FormEvent, useEffect, useRef, useState } from 'react';
 interface KategoriOption {
     kategori_id: number;
     nama_kategori: string;
+    children?: { kategori_id: number; nama_kategori: string }[];
 }
 
 interface ArtikelItem {
@@ -20,6 +21,7 @@ interface ArtikelItem {
 interface BannerItem {
     banner_id: number;
     judul: string;
+    deskripsi: string | null;
     gambar: string;
     link_url: string | null;
 }
@@ -59,6 +61,9 @@ function BannerCarousel({ banner }: { banner: BannerItem[] }) {
             <img src={`/storage/${current.gambar}`} alt={current.judul} className="h-full w-full object-cover" />
             <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-3">
                 <p className="font-mono text-xs tracking-wide text-white sm:text-sm">{current.judul}</p>
+                {current.deskripsi && (
+                    <p className="mt-1 line-clamp-2 text-xs text-white/80 sm:text-sm">{current.deskripsi}</p>
+                )}
             </div>
         </div>
     );
@@ -131,6 +136,14 @@ export default function Home({ artikel, kategori, banner, filters, auth, flash }
 
     const bisaKeDashboard = auth.user && (auth.user.role === 'admin' || auth.user.role === 'publisher');
 
+    // Kategori induk yang lagi aktif dipilih, entah lewat tab induknya sendiri
+    // atau lewat salah satu sub-kategorinya (dipilih dari dropdown).
+    const parentAktif = kategori.find(
+        (k) =>
+            String(k.kategori_id) === filters.kategori ||
+            k.children?.some((c) => String(c.kategori_id) === filters.kategori),
+    );
+
     return (
         <>
             <Head title="Pendigi - Portal Informasi" />
@@ -171,6 +184,15 @@ export default function Home({ artikel, kategori, banner, filters, auth, flash }
                             PENDIGI
                         </Link>
                         <div className="h-6 w-px" style={{ backgroundColor: '#e3c7d2' }} />
+                        <span className="shrink-0 font-mono text-xs tracking-wider" style={{ color: '#a8265c' }}>
+                            ARTIKEL
+                        </span>
+                        <Link
+                            href={route('cerita.index')}
+                            className="shrink-0 font-mono text-xs tracking-wider text-gray-500 hover:text-[#a8265c]"
+                        >
+                            FIKSI
+                        </Link>
                         <form onSubmit={submitSearch} className="flex-1">
                             <input
                                 type="text"
@@ -242,21 +264,48 @@ export default function Home({ artikel, kategori, banner, filters, auth, flash }
                         >
                             // SEMUA
                         </button>
-                        {kategori.map((k) => (
-                            <button
-                                key={k.kategori_id}
-                                onClick={() => filterKategori(String(k.kategori_id))}
-                                className="whitespace-nowrap pb-1"
-                                style={
-                                    filters.kategori === String(k.kategori_id)
-                                        ? { color: '#a8265c', borderBottom: '2px solid #a8265c', fontWeight: 600 }
-                                        : { color: '#6b7280' }
-                                }
-                            >
-                                {k.nama_kategori.toUpperCase()}
-                            </button>
-                        ))}
+                        {kategori.map((k) => {
+                            const aktif =
+                                filters.kategori === String(k.kategori_id) ||
+                                k.children?.some((c) => String(c.kategori_id) === filters.kategori);
+                            return (
+                                <button
+                                    key={k.kategori_id}
+                                    onClick={() => filterKategori(String(k.kategori_id))}
+                                    className="whitespace-nowrap pb-1"
+                                    style={
+                                        aktif
+                                            ? { color: '#a8265c', borderBottom: '2px solid #a8265c', fontWeight: 600 }
+                                            : { color: '#6b7280' }
+                                    }
+                                >
+                                    {k.nama_kategori.toUpperCase()}
+                                </button>
+                            );
+                        })}
                     </div>
+
+                    {/* Dropdown sub-kategori - cuma muncul kalau kategori induk yang aktif punya anak */}
+                    {parentAktif && parentAktif.children && parentAktif.children.length > 0 && (
+                        <div className="mt-2 flex items-center gap-2 font-mono text-xs">
+                            <span className="text-gray-400">// SUB-KATEGORI</span>
+                            <select
+                                value={filters.kategori ?? ''}
+                                onChange={(e) => filterKategori(e.target.value)}
+                                className="bg-[#faf7f8] px-2 py-1 text-gray-700 focus:outline-none"
+                                style={{ ...clipPanelSm, border: '1px solid #e3c7d2' }}
+                            >
+                                <option value={String(parentAktif.kategori_id)}>
+                                    SEMUA {parentAktif.nama_kategori.toUpperCase()}
+                                </option>
+                                {parentAktif.children.map((c) => (
+                                    <option key={c.kategori_id} value={String(c.kategori_id)}>
+                                        {c.nama_kategori.toUpperCase()}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                    )}
 
                     {/* Grid artikel */}
                     <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">

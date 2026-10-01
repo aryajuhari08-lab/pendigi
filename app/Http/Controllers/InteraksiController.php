@@ -3,9 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\Artikel;
+use App\Models\Cerita;
 use App\Models\Komentar;
 use App\Models\Likes;
 use App\Models\Rating;
+use App\Models\RatingCerita;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
@@ -48,6 +50,23 @@ class InteraksiController extends Controller
         return back()->with('success', 'Rating berhasil disimpan.');
     }
 
+    public function ratingCerita(Request $request, Cerita $cerita): RedirectResponse
+    {
+        $request->validate([
+            'skor' => ['required', 'integer', 'min:1', 'max:5'],
+        ]);
+
+        RatingCerita::updateOrCreate(
+            [
+                'cerita_id' => $cerita->cerita_id,
+                'user_id' => $request->user()->user_id,
+            ],
+            ['skor' => $request->skor],
+        );
+
+        return back()->with('success', 'Rating berhasil disimpan.');
+    }
+
     public function komentar(Request $request, Artikel $artikel): RedirectResponse
     {
         $request->validate([
@@ -79,8 +98,6 @@ class InteraksiController extends Controller
             'artikel_id' => $artikel->artikel_id,
             'parent_id' => $komentar->komentar_id,
             'komentar' => $request->komentar,
-            // Balasan dari penulis artikel sendiri langsung tayang.
-            // Balasan dari user lain (reader/publisher lain) tetap perlu dimoderasi, sama seperti komentar biasa.
             'status' => $isPenulisArtikel ? 'approved' : 'pending',
         ]);
 

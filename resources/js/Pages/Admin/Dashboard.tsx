@@ -146,6 +146,14 @@ export default function Dashboard({ ringkasan, artikelPerKategori, userPerRole, 
                             <p className="font-mono text-[10px] tracking-wider text-gray-400">MODERASI</p>
                             <p className="mt-1 text-lg font-semibold" style={{ color: accent }}>Komentar</p>
                         </Link>
+                        <Link href={route('admin.moderasi.cerita')} className="bg-white p-6 shadow hover:shadow-md" style={{ ...clipPanel, border: `1px solid ${accentBorder}` }}>
+                            <p className="font-mono text-[10px] tracking-wider text-gray-400">MODERASI</p>
+                            <p className="mt-1 text-lg font-semibold" style={{ color: accent }}>Cerita</p>
+                        </Link>
+                        <Link href={route('admin.moderasi.bab')} className="bg-white p-6 shadow hover:shadow-md" style={{ ...clipPanel, border: `1px solid ${accentBorder}` }}>
+                            <p className="font-mono text-[10px] tracking-wider text-gray-400">MODERASI</p>
+                            <p className="mt-1 text-lg font-semibold" style={{ color: accent }}>Bab</p>
+                        </Link>
                         <Link href={route('admin.kategori.index')} className="bg-white p-6 shadow hover:shadow-md" style={{ ...clipPanel, border: `1px solid ${accentBorder}` }}>
                             <p className="font-mono text-[10px] tracking-wider text-gray-400">KELOLA</p>
                             <p className="mt-1 text-lg font-semibold" style={{ color: accent }}>Kategori</p>

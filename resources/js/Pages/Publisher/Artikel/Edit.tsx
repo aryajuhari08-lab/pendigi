@@ -47,7 +47,7 @@ export default function Edit({ artikel, kategori }: { artikel: ArtikelData; kate
     const [preview, setPreview] = useState<string | null>(
         artikel.gambar ? `/storage/${artikel.gambar}` : null,
     );
-    const { data, setData, put, processing, errors } = useForm({
+    const { data, setData, transform, post, processing, errors } = useForm({
         judul_artikel: artikel.judul_artikel,
         kategori_id: String(artikel.kategori_id),
         isi_artikel: artikel.isi_artikel,
@@ -69,8 +69,10 @@ export default function Edit({ artikel, kategori }: { artikel: ArtikelData; kate
     const labelSumber = isNonFiksi ? 'Judul Buku / Sumber Referensi' : 'Sumber';
 
     const submit = (aksi: 'draft' | 'submit') => {
-        setData('aksi', aksi);
-        put(route('publisher.artikel.update', artikel.artikel_id), {
+        // Ada upload file: kirim sebagai POST + _method=put (PHP tidak membaca multipart lewat PUT asli).
+        // aksi juga diisi lewat transform supaya tidak tertinggal satu klik (setData bersifat async).
+        transform((currentData) => ({ ...currentData, aksi, _method: 'put' }));
+        post(route('publisher.artikel.update', artikel.artikel_id), {
             forceFormData: true,
         });
     };

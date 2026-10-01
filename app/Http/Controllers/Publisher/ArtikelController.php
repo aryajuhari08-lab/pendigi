@@ -13,10 +13,18 @@ use Inertia\Response;
 
 class ArtikelController extends Controller
 {
+    private function daftarKategori()
+    {
+        return Kategori::utama()
+            ->with('children:kategori_id,parent_id,nama_kategori')
+            ->orderBy('nama_kategori')
+            ->get(['kategori_id', 'nama_kategori']);
+    }
+
     public function create(): Response
     {
         return Inertia::render('Publisher/Artikel/Create', [
-            'kategori' => Kategori::orderBy('nama_kategori')->get(['kategori_id', 'nama_kategori']),
+            'kategori' => $this->daftarKategori(),
         ]);
     }
 
@@ -31,6 +39,10 @@ class ArtikelController extends Controller
             'gambar' => ['nullable', 'image', 'max:2048'],
             'aksi' => ['required', 'in:draft,submit'],
         ]);
+
+        // Bersihkan HTML dari isi CKEditor sebelum disimpan, cegah stored XSS
+        // (script, onerror, javascript: dsb otomatis dibuang oleh HTMLPurifier).
+        $validated['isi_artikel'] = clean($validated['isi_artikel']);
 
         $path = null;
         if ($request->hasFile('gambar')) {
@@ -60,7 +72,7 @@ class ArtikelController extends Controller
 
         return Inertia::render('Publisher/Artikel/Edit', [
             'artikel' => $artikel,
-            'kategori' => Kategori::orderBy('nama_kategori')->get(['kategori_id', 'nama_kategori']),
+            'kategori' => $this->daftarKategori(),
         ]);
     }
 
@@ -77,6 +89,8 @@ class ArtikelController extends Controller
             'gambar' => ['nullable', 'image', 'max:2048'],
             'aksi' => ['required', 'in:draft,submit'],
         ]);
+
+        $validated['isi_artikel'] = clean($validated['isi_artikel']);
 
         $path = $artikel->gambar;
         if ($request->hasFile('gambar')) {
