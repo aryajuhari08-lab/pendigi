@@ -108,6 +108,11 @@ class CeritaController extends Controller
         $path = $cerita->sampul;
         if ($request->hasFile('sampul')) {
             $path = $request->file('sampul')->store('cerita', 'public');
+
+            // Sampul lama dihapus setelah yang baru berhasil tersimpan, supaya file tidak menumpuk di server
+            if ($cerita->sampul) {
+                Storage::disk('public')->delete($cerita->sampul);
+            }
         }
 
         $cerita->update([

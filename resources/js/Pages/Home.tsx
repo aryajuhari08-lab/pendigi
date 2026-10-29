@@ -1,3 +1,7 @@
+import Lonceng from '@/Components/Lonceng';
+import Paginasi, { DataPaginasi } from '@/Components/Paginasi';
+import KartuPustaka, { ItemPustaka } from '@/Components/KartuPustaka';
+import Avatar from '@/Components/Avatar';
 import { Head, Link, router } from '@inertiajs/react';
 import { FormEvent, useEffect, useRef, useState } from 'react';
 
@@ -13,7 +17,7 @@ interface ArtikelItem {
     gambar: string | null;
     tanggal_publikasi: string;
     kategori?: { nama_kategori: string };
-    penulis?: { nama_lengkap: string };
+    penulis?: { nama_lengkap: string; foto_profil?: string | null };
     likes_count: number;
     rating_count: number;
 }
@@ -27,11 +31,12 @@ interface BannerItem {
 }
 
 interface PageProps {
-    artikel: ArtikelItem[];
+    artikel: DataPaginasi & { data: ArtikelItem[] };
     kategori: KategoriOption[];
     banner: BannerItem[];
     filters: { search?: string; kategori?: string };
-    auth: { user: { nama_lengkap: string; role: string } | null };
+    lanjutBaca: ItemPustaka[];
+    auth: { user: { nama_lengkap: string; role: string; foto_profil?: string | null } | null };
     flash: { success?: string; error?: string };
 }
 
@@ -94,7 +99,7 @@ function BannerCarousel({ banner }: { banner: BannerItem[] }) {
     );
 }
 
-export default function Home({ artikel, kategori, banner, filters, auth, flash }: PageProps) {
+export default function Home({ artikel, kategori, banner, filters, lanjutBaca, auth, flash }: PageProps) {
     const [search, setSearch] = useState(filters.search ?? '');
     const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const isFirstRender = useRef(true);
@@ -206,9 +211,21 @@ export default function Home({ artikel, kategori, banner, filters, auth, flash }
                         <div className="flex shrink-0 items-center gap-3 font-mono text-xs">
                             {auth.user ? (
                                 <>
-                                    <span className="hidden tracking-wide text-gray-500 sm:inline">
-                                        {auth.user.nama_lengkap}
-                                    </span>
+                                    <Lonceng />
+    <Link
+    href={route('pustaka.index')}
+    className="tracking-wider text-gray-500 hover:text-[#a8265c]"
+>
+    PUSTAKA
+</Link>
+<Link
+    href={route('profile.edit')}
+    title="Profil akun"
+    className="flex items-center gap-2 tracking-wide text-gray-500 hover:text-[#a8265c]"
+>
+    <Avatar nama={auth.user.nama_lengkap} foto={auth.user.foto_profil} size={28} />
+    <span className="hidden sm:inline">{auth.user.nama_lengkap}</span>
+</Link>
                                     {bisaKeDashboard && (
                                         <Link
                                             href={route('dashboard')}
@@ -307,9 +324,33 @@ export default function Home({ artikel, kategori, banner, filters, auth, flash }
                         </div>
                     )}
 
+                    {/* Lanjutkan membaca: hanya untuk user yang login dan punya riwayat, disembunyikan saat mencari/memfilter */}
+                    {lanjutBaca.length > 0 && !filters.search && !filters.kategori && artikel.current_page === 1 && (
+                        <div className="mt-4">
+                            <div className="mb-2 flex items-center justify-between">
+                                <p className="font-mono text-xs tracking-wider text-gray-500">
+                                    <span style={{ color: '#a8265c' }}>// </span>
+                                    LANJUTKAN MEMBACA
+                                </p>
+                                <Link
+                                    href={route('pustaka.index')}
+                                    className="font-mono text-[11px] tracking-wider hover:underline"
+                                    style={{ color: '#a8265c' }}
+                                >
+                                    PUSTAKA SAYA →
+                                </Link>
+                            </div>
+                            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                                {lanjutBaca.map((item) => (
+                                    <KartuPustaka key={`${item.jenis}-${item.id}`} item={item} ringkas />
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
                     {/* Grid artikel */}
                     <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                        {artikel.length === 0 && (
+                        {artikel.data.length === 0 && (
                             <div
                                 className="col-span-full bg-white p-10 text-center font-mono text-xs text-gray-400 shadow-sm"
                                 style={{ ...clipPanel, border: '1px solid #e3c7d2' }}
@@ -317,7 +358,7 @@ export default function Home({ artikel, kategori, banner, filters, auth, flash }
                                 TIDAK ADA ARTIKEL YANG COCOK.
                             </div>
                         )}
-                        {artikel.map((item) => (
+                        {artikel.data.map((item) => (
                             <Link
                                 key={item.artikel_id}
                                 href={route('artikel.show', item.artikel_id)}
@@ -343,6 +384,10 @@ export default function Home({ artikel, kategori, banner, filters, auth, flash }
                                 </div>
                                 <div className="border-t p-3" style={{ borderColor: '#f0dee5' }}>
                                     <p className="text-sm font-medium text-gray-800">{item.judul_artikel}</p>
+                                    <div className="mt-2 flex items-center gap-1.5 font-mono text-[10px] text-gray-500">
+                                        <Avatar nama={item.penulis?.nama_lengkap ?? '?'} foto={item.penulis?.foto_profil} size={18} />
+                                        <span className="truncate">{item.penulis?.nama_lengkap ?? '-'}</span>
+                                    </div>
                                     <p className="mt-1 font-mono text-[10px] text-gray-400">
                                         {new Date(item.tanggal_publikasi)
                                             .toLocaleDateString('id-ID')
@@ -357,9 +402,13 @@ export default function Home({ artikel, kategori, banner, filters, auth, flash }
                         ))}
                     </div>
 
-                    <p className="mt-8 text-center font-mono text-[10px] tracking-widest text-gray-400">
-                        -- END OF FEED --
-                    </p>
+                    <Paginasi paginasi={artikel} satuan="artikel" />
+
+                    {artikel.current_page >= artikel.last_page && (
+                        <p className="mt-8 text-center font-mono text-[10px] tracking-widest text-gray-400">
+                            -- END OF FEED --
+                        </p>
+                    )}
                 </div>
             </div>
         </>

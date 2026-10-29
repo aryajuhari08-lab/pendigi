@@ -1,3 +1,5 @@
+import TombolSimpan from '@/Components/TombolSimpan';
+import Avatar from '@/Components/Avatar';
 import { Head, Link, router } from '@inertiajs/react';
 import { useState } from 'react';
 
@@ -23,7 +25,7 @@ interface CeritaData {
     status_progres: 'berlangsung' | 'tamat';
     views: number;
     updated_at: string;
-    penulis?: { nama_lengkap: string };
+    penulis?: { nama_lengkap: string; foto_profil?: string | null };
 }
 
 interface BabItem {
@@ -40,6 +42,10 @@ interface PageProps {
     ratingAvg: number;
     ratingCount: number;
     ratingSaya: number | null;
+    likesCount: number;
+    sudahLike: boolean;
+    sudahBookmark: boolean;
+    babTerakhir: { bab_id: number; nomor_bab: number } | null;
     auth: { user: { nama_lengkap: string; role: string } | null };
 }
 
@@ -47,9 +53,14 @@ function formatTanggal(tanggal: string) {
     return new Date(tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
-export default function Show({ cerita, bab, ratingAvg, ratingCount, ratingSaya, auth }: PageProps) {
+export default function Show({ cerita, bab, ratingAvg, ratingCount, ratingSaya, likesCount, sudahLike, sudahBookmark, babTerakhir, auth }: PageProps) {
     const [tab, setTab] = useState<'ringkasan' | 'bab'>('ringkasan');
     const tags = cerita.tag ? cerita.tag.split(',').map((t) => t.trim()).filter(Boolean) : [];
+
+    const toggleLike = () => {
+        if (!auth.user) return router.visit(route('login'));
+        router.post(route('cerita.like', cerita.cerita_id), {}, { preserveScroll: true });
+    };
 
     const beriRating = (skor: number) => {
         if (!auth.user) return;
@@ -95,22 +106,39 @@ export default function Show({ cerita, bab, ratingAvg, ratingCount, ratingSaya, 
 
                         <div className="flex-1">
                             <h1 className="text-2xl font-bold text-gray-800">{cerita.judul_cerita}</h1>
-                            <p className="mt-1 font-mono text-xs tracking-wider text-gray-500">{cerita.penulis?.nama_lengkap}</p>
+                            <p className="mt-2 flex items-center gap-2 font-mono text-xs tracking-wider text-gray-500">
+                                <Avatar nama={cerita.penulis?.nama_lengkap ?? '?'} foto={cerita.penulis?.foto_profil} size={24} />
+                                {cerita.penulis?.nama_lengkap}
+                            </p>
 
                             <div className="mt-3 flex items-center gap-4 font-mono text-xs text-gray-500">
                                 <span>👁 {cerita.views}</span>
                                 <span>★ {ratingAvg} ({ratingCount})</span>
+                                <button type="button" onClick={toggleLike} title={sudahLike ? 'Batal suka' : 'Suka cerita ini'} style={{ color: sudahLike ? ACCENT : undefined }}>
+                                    ♥ {likesCount}
+</button>
+<TombolSimpan rute="cerita.bookmark" id={cerita.cerita_id} sudahBookmark={sudahBookmark} isLoggedIn={!!auth.user} />
                                 <span>≡ {bab.length} BAB</span>
                             </div>
 
                             {bab.length > 0 && (
-                                <Link
-                                    href={route('cerita.baca', [cerita.cerita_id, bab[0].bab_id])}
-                                    className="mt-4 inline-block px-5 py-2 font-mono text-xs tracking-wider text-white transition hover:opacity-90"
-                                    style={{ ...clipPanelSm, backgroundColor: ACCENT }}
-                                >
-                                    MULAI MEMBACA
-                                </Link>
+                                <div className="mt-4 flex flex-wrap items-center gap-4">
+                                    <Link
+                                        href={route('cerita.baca', [cerita.cerita_id, babTerakhir?.bab_id ?? bab[0].bab_id])}
+                                        className="inline-block px-5 py-2 font-mono text-xs tracking-wider text-white transition hover:opacity-90"
+                                        style={{ ...clipPanelSm, backgroundColor: ACCENT }}
+                                    >
+                                        {babTerakhir ? `LANJUT MEMBACA · BAB ${babTerakhir.nomor_bab}` : 'MULAI MEMBACA'}
+                                    </Link>
+                                    {babTerakhir && (
+                                        <Link
+                                            href={route('cerita.baca', [cerita.cerita_id, bab[0].bab_id])}
+                                            className="font-mono text-[11px] tracking-wider text-gray-500 underline hover:text-gray-800"
+                                        >
+                                            DARI AWAL
+                                        </Link>
+                                    )}
+                                </div>
                             )}
 
                             {auth.user && (

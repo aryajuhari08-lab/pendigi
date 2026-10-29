@@ -3,6 +3,7 @@ export interface User {
     nama_lengkap: string;
     email: string;
     role: 'admin' | 'publisher' | 'reader';
+    foto_profil?: string | null;
     email_verified_at?: string | null;
 }
 

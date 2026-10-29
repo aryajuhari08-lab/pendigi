@@ -2,8 +2,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import InputError from '@/Components/InputError';
 import { Head, useForm } from '@inertiajs/react';
 import { FormEvent, useState } from 'react';
-import { CKEditor } from '@ckeditor/ckeditor5-react';
-import ClassicEditor from '@ckeditor/ckeditor5-build-classic';
+import EditorKonten from '@/Components/EditorKonten';
 
 interface KategoriOption {
     kategori_id: number;
@@ -212,15 +211,10 @@ export default function Create({ kategori }: { kategori: KategoriOption[] }) {
                         <div>
                             <FieldLabel>Isi Artikel</FieldLabel>
                             <div style={{ ...clipPanelSm, border: `1px solid ${BORDER}`, overflow: 'hidden' }}>
-                                <CKEditor
-                                    editor={ClassicEditor}
-                                    data={data.isi_artikel}
-                                    onChange={(_event, editor) => {
-                                        setData('isi_artikel', editor.getData());
-                                    }}
-                                    config={{
-                                        placeholder: 'Tulis isi artikelmu di sini... (minimal 50 karakter)',
-                                    }}
+                                <EditorKonten
+                                    value={data.isi_artikel}
+                                    onChange={(html) => setData('isi_artikel', html)}
+                                    placeholder="Tulis isi artikelmu di sini... (minimal 50 karakter)"
                                 />
                             </div>
                             <p className="mt-1 font-mono text-[10px] tracking-wider text-gray-400">

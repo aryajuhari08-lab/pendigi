@@ -16,9 +16,16 @@ class Komentar extends Model
     protected $fillable = [
         'user_id',
         'artikel_id',
+        'bab_id',
         'parent_id',
         'komentar',
         'status',
+        'direview_oleh',
+        'direview_pada',
+    ];
+
+    protected $casts = [
+        'direview_pada' => 'datetime',
     ];
 
     // Relasi: komentar ditulis oleh satu user (reader atau publisher yang membalas)
@@ -31,6 +38,18 @@ class Komentar extends Model
     public function artikel()
     {
         return $this->belongsTo(Artikel::class, 'artikel_id', 'artikel_id');
+    }
+
+    // Relasi: komentar ini milik satu bab cerita (kalau bukan komentar artikel)
+    public function bab()
+    {
+        return $this->belongsTo(Bab::class, 'bab_id', 'bab_id');
+    }
+
+    // Relasi: admin yang menyetujui/menolak komentar ini
+    public function peninjau()
+    {
+        return $this->belongsTo(User::class, 'direview_oleh', 'user_id');
     }
 
     // Relasi: komentar ini adalah balasan dari komentar lain (kalau ada)

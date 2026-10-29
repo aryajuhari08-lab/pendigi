@@ -25,6 +25,12 @@ class Bab extends Model
         return $this->belongsTo(Cerita::class, 'cerita_id', 'cerita_id');
     }
 
+    // Relasi: komentar pembaca pada bab ini
+    public function komentar()
+    {
+        return $this->hasMany(Komentar::class, 'bab_id', 'bab_id');
+    }
+
     // Scope: hanya bab yang sudah published (untuk halaman publik)
     public function scopePublished($query)
     {

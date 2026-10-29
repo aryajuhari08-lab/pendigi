@@ -1,8 +1,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import InputError from '@/Components/InputError';
 import { Head, Link, useForm } from '@inertiajs/react';
-import { CKEditor } from '@ckeditor/ckeditor5-react';
-import ClassicEditor from '@ckeditor/ckeditor5-build-classic';
+import EditorKonten from '@/Components/EditorKonten';
 
 const clipPanel = { clipPath: 'polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 14px 100%, 0 calc(100% - 14px))' };
 const clipPanelSm = { clipPath: 'polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px))' };
@@ -130,12 +129,9 @@ export default function Edit({ bab, cerita }: { bab: BabData; cerita: CeritaRing
                         <div>
                             <FieldLabel>Isi Bab</FieldLabel>
                             <div style={{ ...clipPanelSm, border: `1px solid ${BORDER}`, overflow: 'hidden' }}>
-                                <CKEditor
-                                    editor={ClassicEditor}
-                                    data={data.isi_bab}
-                                    onChange={(_event, editor) => {
-                                        setData('isi_bab', editor.getData());
-                                    }}
+                                <EditorKonten
+                                    value={data.isi_bab}
+                                    onChange={(html) => setData('isi_bab', html)}
                                 />
                             </div>
                             <p className="mt-1 font-mono text-[10px] tracking-wider text-gray-400">

@@ -1,3 +1,5 @@
+import Lonceng from '@/Components/Lonceng';
+import Avatar from '@/Components/Avatar';
 import Dropdown from '@/Components/Dropdown';
 import NavLink from '@/Components/NavLink';
 import ResponsiveNavLink from '@/Components/ResponsiveNavLink';
@@ -53,10 +55,14 @@ export default function Authenticated({
                                 >
                                     LIHAT PENDIGI
                                 </NavLink>
+                                <NavLink href={route('pustaka.index')} active={route().current('pustaka.index')}>
+                                    PUSTAKA
+                                </NavLink>
                             </div>
                         </div>
 
                         <div className="hidden sm:ms-6 sm:flex sm:items-center">
+                            <Lonceng />
                             <div className="relative ms-3">
                                 <Dropdown>
                                     <Dropdown.Trigger>
@@ -66,6 +72,7 @@ export default function Authenticated({
                                                 className="inline-flex items-center px-3 py-2 font-mono text-xs tracking-wider transition duration-150 ease-in-out focus:outline-none"
                                                 style={{ color: accent }}
                                             >
+                                                <Avatar nama={user.nama_lengkap} foto={user.foto_profil} size={24} className="me-2" />
                                                 {user.nama_lengkap}
 
                                                 <svg
@@ -103,6 +110,7 @@ export default function Authenticated({
                         </div>
 
                         <div className="-me-2 flex items-center sm:hidden">
+                            <Lonceng />
                             <button
                                 onClick={() =>
                                     setShowingNavigationDropdown(
@@ -163,6 +171,9 @@ export default function Authenticated({
                             active={route().current('home')}
                         >
                             Lihat Pendigi
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink href={route('pustaka.index')} active={route().current('pustaka.index')}>
+                            Pustaka Saya
                         </ResponsiveNavLink>
                     </div>
 

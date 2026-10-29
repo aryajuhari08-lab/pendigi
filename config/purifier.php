@@ -25,8 +25,20 @@ return [
     'settings'      => [
         'default' => [
             'HTML.Doctype'             => 'HTML 4.01 Transitional',
-            'HTML.Allowed'             => 'div,b,strong,i,em,u,a[href|title],ul,ol,li,p[style],br,span[style],img[width|height|alt|src]',
-            'CSS.AllowedProperties'    => 'font,font-size,font-weight,font-style,font-family,text-decoration,padding-left,color,background-color,text-align',
+            // Whitelist disesuaikan dengan keluaran CKEditor 5 (build classic): heading h2-h4, daftar,
+            // blockquote, tabel, dan gambar yang dibungkus <figure>. h1 sengaja tidak diizinkan karena
+            // h1 dipakai untuk judul halaman. Elemen di luar daftar ini dibuang tagnya (teksnya tetap).
+            'HTML.Allowed'             => 'div,b,strong,i,em,u,s,sub,sup,a[href|title],ul,ol,li,p[style],br,span[style],'
+                . 'h2,h3,h4,h5,h6,blockquote,hr,'
+                . 'table,thead,tbody,tfoot,tr,th[colspan|rowspan],td[colspan|rowspan],'
+                . 'figure[class|style],figcaption,img[class|style|width|height|alt|src]',
+            'CSS.AllowedProperties'    => 'font,font-size,font-weight,font-style,font-family,text-decoration,padding-left,color,background-color,text-align,width',
+            // class hanya boleh nilai bawaan CKEditor untuk figure gambar/tabel, selain itu dibuang
+            'Attr.AllowedClasses'      => [
+                'image', 'image_resized', 'image-style-side', 'image-style-align-left',
+                'image-style-align-right', 'image-style-align-center', 'image-style-block-align-left',
+                'image-style-block-align-right', 'table',
+            ],
             'AutoFormat.AutoParagraph' => true,
             'AutoFormat.RemoveEmpty'   => true,
         ],

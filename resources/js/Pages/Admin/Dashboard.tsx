@@ -1,14 +1,7 @@
+import { BarChartHorizontal, BarChartVertical, labelBulan } from '@/Components/Charts';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link } from '@inertiajs/react';
-
-const clipPanel = { clipPath: 'polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 14px 100%, 0 calc(100% - 14px))' };
-const accent = '#a8265c';
-const accentBorder = '#e3c7d2';
-
-interface KategoriStat {
-    nama: string;
-    jumlah: number;
-}
+import { ReactNode } from 'react';
 
 interface BulanStat {
     bulan: string;
@@ -20,161 +13,353 @@ interface DashboardProps {
         totalArtikel: number;
         menungguModerasiArtikel: number;
         menungguModerasiKomentar: number;
+        menungguModerasiCerita?: number;
+        menungguModerasiBab?: number;
         totalUser: number;
     };
-    artikelPerKategori: KategoriStat[];
+    artikelPerKategori: { nama: string; jumlah: number }[];
     userPerRole: Record<string, number>;
     artikelPerBulan: BulanStat[];
+    userBaruPerBulan: BulanStat[];
+    komentarPerStatus: Record<string, number>;
+    artikelTerpopuler: { artikel_id: number; judul_artikel: string; views: number }[];
+    ceritaTerpopuler: { cerita_id: number; judul_cerita: string; views: number }[];
+    ceritaPerGenre: { genre: string; jumlah: number }[];
 }
 
-function BarChartHorizontal({ data }: { data: KategoriStat[] }) {
-    const max = Math.max(...data.map((d) => d.jumlah), 1);
+function PanelGrafik({
+    judul,
+    subjudul,
+    className = '',
+    children,
+}: {
+    judul: string;
+    subjudul?: string;
+    className?: string;
+    children: ReactNode;
+}) {
     return (
-        <div className="flex flex-col gap-3">
-            {data.map((d) => (
-                <div key={d.nama} className="flex items-center gap-3">
-                    <span className="w-28 shrink-0 font-mono text-[11px] text-gray-500">{d.nama}</span>
-                    <div className="h-4 flex-1 bg-[#f3e8ec]">
-                        <div
-                            className="h-4"
-                            style={{ width: `${(d.jumlah / max) * 100}%`, backgroundColor: accent }}
-                        />
-                    </div>
-                    <span className="w-6 shrink-0 text-right text-xs font-semibold text-gray-700">{d.jumlah}</span>
-                </div>
-            ))}
+        <div className={`rounded-xl border border-slate-200/80 bg-white p-6 shadow-xs ${className}`}>
+            <div className="mb-5">
+                <h3 className="text-sm font-semibold tracking-tight text-slate-900">{judul}</h3>
+                {subjudul && <p className="mt-0.5 text-xs text-slate-500">{subjudul}</p>}
+            </div>
+            {children}
         </div>
     );
 }
 
-function BarChartVertical({ data }: { data: BulanStat[] }) {
-    const max = Math.max(...data.map((d) => d.jumlah), 1);
-    const formatBulan = (b: string) => {
-        const [y, m] = b.split('-');
-        const nama = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
-        return `${nama[parseInt(m, 10) - 1]} ${y.slice(2)}`;
-    };
+function StatItem({
+    label,
+    value,
+    badge,
+    highlight = false,
+}: {
+    label: string;
+    value: number;
+    badge?: string;
+    highlight?: boolean;
+}) {
     return (
-        <div className="flex h-40 items-end gap-4">
-            {data.map((d) => (
-                <div key={d.bulan} className="flex flex-1 flex-col items-center gap-2">
-                    <span className="text-xs font-semibold text-gray-700">{d.jumlah}</span>
-                    <div
-                        className="w-full"
-                        style={{
-                            height: `${Math.max((d.jumlah / max) * 100, 4)}%`,
-                            backgroundColor: accent,
-                        }}
-                    />
-                    <span className="font-mono text-[10px] text-gray-400">{formatBulan(d.bulan)}</span>
-                </div>
-            ))}
+        <div className="rounded-xl border border-slate-200/80 bg-white p-5 shadow-xs transition-all hover:border-slate-300">
+            <div className="flex items-center justify-between gap-2">
+                <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">{label}</span>
+                {badge && (
+                    <span className="inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-700">
+                        {badge}
+                    </span>
+                )}
+            </div>
+            <p className={`mt-3 text-3xl font-bold tracking-tight ${highlight ? 'text-[#a8265c]' : 'text-slate-900'}`}>
+                {value.toLocaleString('id-ID')}
+            </p>
         </div>
     );
 }
 
-export default function Dashboard({ ringkasan, artikelPerKategori, userPerRole, artikelPerBulan }: DashboardProps) {
-    const roleLabel: Record<string, string> = { admin: 'Admin', publisher: 'Publisher', reader: 'Reader' };
+function ActionCard({
+    href,
+    judul,
+    deskripsi,
+    badgeCount,
+}: {
+    href: string;
+    judul: string;
+    deskripsi: string;
+    badgeCount?: number;
+}) {
+    return (
+        <Link
+            href={href}
+            className="group relative flex flex-col justify-between rounded-xl border border-slate-200/80 bg-white p-5 shadow-xs transition-all hover:border-slate-300 hover:shadow-sm"
+        >
+            <div>
+                <div className="flex items-center justify-between gap-2">
+                    <h4 className="text-sm font-semibold text-slate-900 group-hover:text-[#a8265c]">
+                        {judul}
+                    </h4>
+                    {badgeCount !== undefined && badgeCount > 0 && (
+                        <span className="inline-flex h-5 min-w-[20px] items-center justify-center rounded-full bg-amber-100 px-1.5 text-xs font-semibold text-amber-800">
+                            {badgeCount}
+                        </span>
+                    )}
+                </div>
+                <p className="mt-1.5 text-xs text-slate-500 leading-relaxed">{deskripsi}</p>
+            </div>
+            <div className="mt-4 flex items-center text-xs font-medium text-slate-400 group-hover:text-[#a8265c]">
+                <span>Kelola</span>
+                <svg
+                    className="ml-1 h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+            </div>
+        </Link>
+    );
+}
+
+const Kosong = () => <p className="py-4 text-xs text-slate-400">Belum ada data untuk ditampilkan.</p>;
+
+export default function Dashboard({
+    ringkasan,
+    artikelPerKategori,
+    userPerRole,
+    artikelPerBulan,
+    userBaruPerBulan,
+    komentarPerStatus,
+    artikelTerpopuler,
+    ceritaTerpopuler,
+    ceritaPerGenre,
+}: DashboardProps) {
+    const roleLabel: Record<string, string> = { admin: 'Administrator', publisher: 'Penulis / Publisher', reader: 'Pembaca' };
+    const statusLabel: Record<string, string> = { approved: 'Disetujui', pending: 'Menunggu', rejected: 'Ditolak' };
+
+    const perBulan = (data: BulanStat[]) => data.map((d) => ({ label: labelBulan(d.bulan), value: d.jumlah }));
+    const adaData = (data: BulanStat[]) => data.some((d) => d.jumlah > 0);
+
+    const menungguArtikel = ringkasan.menungguModerasiArtikel ?? 0;
+    const menungguKomentar = ringkasan.menungguModerasiKomentar ?? 0;
+    const menungguCerita = ringkasan.menungguModerasiCerita ?? 0;
+    const menungguBab = ringkasan.menungguModerasiBab ?? 0;
 
     return (
         <AuthenticatedLayout
-            header={<h2 className="text-xl font-semibold leading-tight text-gray-800">Dashboard Admin</h2>}
+            header={
+                <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                        <h2 className="text-xl font-bold tracking-tight text-slate-900">Dashboard Panel Moderasi</h2>
+                        <p className="text-xs text-slate-500">Ikhtisar statistik publikasi, pengguna, dan antrean moderasi platform Pendigi.</p>
+                    </div>
+                </div>
+            }
         >
-            <Head title="Dashboard Admin" />
+            <Head title="Dashboard Admin - Pendigi" />
 
-            <div className="py-12">
-                <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
-                    {/* Ringkasan angka */}
-                    <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-                        <div className="bg-white p-5 shadow" style={{ ...clipPanel, border: `1px solid ${accentBorder}` }}>
-                            <p className="font-mono text-[10px] tracking-wider text-gray-400">TOTAL ARTIKEL</p>
-                            <p className="mt-1 text-3xl font-bold" style={{ color: accent }}>{ringkasan.totalArtikel}</p>
-                        </div>
-                        <div className="bg-white p-5 shadow" style={{ ...clipPanel, border: `1px solid ${accentBorder}` }}>
-                            <p className="font-mono text-[10px] tracking-wider text-gray-400">MENUNGGU ARTIKEL</p>
-                            <p className="mt-1 text-3xl font-bold text-amber-600">{ringkasan.menungguModerasiArtikel}</p>
-                        </div>
-                        <div className="bg-white p-5 shadow" style={{ ...clipPanel, border: `1px solid ${accentBorder}` }}>
-                            <p className="font-mono text-[10px] tracking-wider text-gray-400">MENUNGGU KOMENTAR</p>
-                            <p className="mt-1 text-3xl font-bold text-amber-600">{ringkasan.menungguModerasiKomentar}</p>
-                        </div>
-                        <div className="bg-white p-5 shadow" style={{ ...clipPanel, border: `1px solid ${accentBorder}` }}>
-                            <p className="font-mono text-[10px] tracking-wider text-gray-400">TOTAL USER</p>
-                            <p className="mt-1 text-3xl font-bold text-gray-700">{ringkasan.totalUser}</p>
-                        </div>
-                    </div>
+            <div className="py-8 bg-slate-50/50 min-h-[calc(100vh-65px)]">
+                <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-8">
 
-                    {/* Grafik */}
-                    <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-3">
-                        <div className="bg-white p-5 shadow lg:col-span-2" style={{ ...clipPanel, border: `1px solid ${accentBorder}` }}>
-                            <p className="mb-4 font-mono text-xs tracking-wider text-gray-500">ARTIKEL PUBLISHED PER BULAN (6 BULAN TERAKHIR)</p>
-                            {artikelPerBulan.length > 0 ? (
-                                <BarChartVertical data={artikelPerBulan} />
-                            ) : (
-                                <p className="text-sm text-gray-400">Belum ada data.</p>
-                            )}
+                    {/* Ringkasan Metrics */}
+                    <section>
+                        <div className="mb-3 flex items-center justify-between">
+                            <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                                Ringkasan Konten & Pengguna
+                            </h3>
                         </div>
-                        <div className="bg-white p-5 shadow" style={{ ...clipPanel, border: `1px solid ${accentBorder}` }}>
-                            <p className="mb-4 font-mono text-xs tracking-wider text-gray-500">USER PER ROLE</p>
-                            <div className="flex flex-col gap-3">
-                                {Object.entries(userPerRole).map(([role, jumlah]) => (
-                                    <div key={role} className="flex items-center justify-between">
-                                        <span className="text-sm text-gray-600">{roleLabel[role] ?? role}</span>
-                                        <span className="text-lg font-bold" style={{ color: accent }}>{jumlah}</span>
-                                    </div>
-                                ))}
-                            </div>
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                            <StatItem
+                                label="Total Artikel Published"
+                                value={ringkasan.totalArtikel}
+                                highlight
+                            />
+                            <StatItem
+                                label="Artikel Menunggu Moderasi"
+                                value={menungguArtikel}
+                                badge={menungguArtikel > 0 ? 'Perlu Ditinjau' : undefined}
+                            />
+                            <StatItem
+                                label="Komentar Menunggu Moderasi"
+                                value={menungguKomentar}
+                                badge={menungguKomentar > 0 ? 'Perlu Ditinjau' : undefined}
+                            />
+                            <StatItem
+                                label="Total Pengguna Terdaftar"
+                                value={ringkasan.totalUser}
+                            />
                         </div>
-                    </div>
+                    </section>
 
-                    <div className="mt-4 bg-white p-5 shadow" style={{ ...clipPanel, border: `1px solid ${accentBorder}` }}>
-                        <p className="mb-4 font-mono text-xs tracking-wider text-gray-500">ARTIKEL PUBLISHED PER KATEGORI</p>
-                        {artikelPerKategori.length > 0 ? (
-                            <BarChartHorizontal data={artikelPerKategori} />
-                        ) : (
-                            <p className="text-sm text-gray-400">Belum ada data.</p>
-                        )}
-                    </div>
+                    {/* Quick Access / Management Navigation */}
+                    <section>
+                        <div className="mb-3">
+                            <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                                Pintasan Navigasi & Moderasi
+                            </h3>
+                        </div>
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                            <ActionCard
+                                href={route('admin.moderasi.artikel')}
+                                judul="Moderasi Artikel"
+                                deskripsi="Tinjau dan setujui naskah artikel dari publisher."
+                                badgeCount={menungguArtikel}
+                            />
+                            <ActionCard
+                                href={route('admin.moderasi.komentar')}
+                                judul="Moderasi Komentar"
+                                deskripsi="Filter dan kelola tanggapan pembaca."
+                                badgeCount={menungguKomentar}
+                            />
+                            <ActionCard
+                                href={route('admin.moderasi.cerita')}
+                                judul="Moderasi Fiksi & Cerita"
+                                deskripsi="Pemeriksaan karya fiksi yang diajukan."
+                                badgeCount={menungguCerita}
+                            />
+                            <ActionCard
+                                href={route('admin.moderasi.bab')}
+                                judul="Moderasi Bab Cerita"
+                                deskripsi="Validasi bab lanjutan dari penulis."
+                                badgeCount={menungguBab}
+                            />
+                            <ActionCard
+                                href={route('admin.kategori.index')}
+                                judul="Manajemen Kategori"
+                                deskripsi="Atur struktur dan hierarki taksonomi artikel."
+                            />
+                            <ActionCard
+                                href={route('admin.users.index')}
+                                judul="Manajemen Pengguna"
+                                deskripsi="Kelola akun, hak akses, dan verifikasi profil."
+                            />
+                            <ActionCard
+                                href={route('admin.banner.index')}
+                                judul="Kelola Banner"
+                                deskripsi="Atur banner pengumuman dan promosi utama."
+                            />
+                            <ActionCard
+                                href={route('admin.pengajuan.index')}
+                                judul="Pengajuan Publisher"
+                                deskripsi="Verifikasi permohonan akun penulis baru."
+                            />
+                        </div>
+                    </section>
 
-                    {/* Menu */}
-                    <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                        <Link href={route('admin.moderasi.artikel')} className="bg-white p-6 shadow hover:shadow-md" style={{ ...clipPanel, border: `1px solid ${accentBorder}` }}>
-                            <p className="font-mono text-[10px] tracking-wider text-gray-400">MODERASI</p>
-                            <p className="mt-1 text-lg font-semibold" style={{ color: accent }}>Artikel</p>
-                        </Link>
-                        <Link href={route('admin.moderasi.komentar')} className="bg-white p-6 shadow hover:shadow-md" style={{ ...clipPanel, border: `1px solid ${accentBorder}` }}>
-                            <p className="font-mono text-[10px] tracking-wider text-gray-400">MODERASI</p>
-                            <p className="mt-1 text-lg font-semibold" style={{ color: accent }}>Komentar</p>
-                        </Link>
-                        <Link href={route('admin.moderasi.cerita')} className="bg-white p-6 shadow hover:shadow-md" style={{ ...clipPanel, border: `1px solid ${accentBorder}` }}>
-                            <p className="font-mono text-[10px] tracking-wider text-gray-400">MODERASI</p>
-                            <p className="mt-1 text-lg font-semibold" style={{ color: accent }}>Cerita</p>
-                        </Link>
-                        <Link href={route('admin.moderasi.bab')} className="bg-white p-6 shadow hover:shadow-md" style={{ ...clipPanel, border: `1px solid ${accentBorder}` }}>
-                            <p className="font-mono text-[10px] tracking-wider text-gray-400">MODERASI</p>
-                            <p className="mt-1 text-lg font-semibold" style={{ color: accent }}>Bab</p>
-                        </Link>
-                        <Link href={route('admin.kategori.index')} className="bg-white p-6 shadow hover:shadow-md" style={{ ...clipPanel, border: `1px solid ${accentBorder}` }}>
-                            <p className="font-mono text-[10px] tracking-wider text-gray-400">KELOLA</p>
-                            <p className="mt-1 text-lg font-semibold" style={{ color: accent }}>Kategori</p>
-                        </Link>
-                        <Link href={route('admin.users.index')} className="bg-white p-6 shadow hover:shadow-md" style={{ ...clipPanel, border: `1px solid ${accentBorder}` }}>
-                            <p className="font-mono text-[10px] tracking-wider text-gray-400">KELOLA</p>
-                            <p className="mt-1 text-lg font-semibold" style={{ color: accent }}>User</p>
-                        </Link>
-                        <Link href={route('admin.banner.index')} className="bg-white p-6 shadow hover:shadow-md" style={{ ...clipPanel, border: `1px solid ${accentBorder}` }}>
-                            <p className="font-mono text-[10px] tracking-wider text-gray-400">KELOLA</p>
-                            <p className="mt-1 text-lg font-semibold" style={{ color: accent }}>Banner</p>
-                        </Link>
-                        <Link href={route('admin.pengajuan.index')} className="bg-white p-6 shadow hover:shadow-md" style={{ ...clipPanel, border: `1px solid ${accentBorder}` }}>
-                            <p className="font-mono text-[10px] tracking-wider text-gray-400">TINJAU</p>
-                            <p className="mt-1 text-lg font-semibold" style={{ color: accent }}>Pengajuan Publisher</p>
-                        </Link>
-                        <Link href={route('admin.daftarNis.index')} className="bg-white p-6 shadow hover:shadow-md" style={{ ...clipPanel, border: `1px solid ${accentBorder}` }}>
-                            <p className="font-mono text-[10px] tracking-wider text-gray-400">KELOLA</p>
-                            <p className="mt-1 text-lg font-semibold" style={{ color: accent }}>Daftar NIS</p>
-                        </Link>
-                    </div>
+                    {/* Analytics / Charts Grid */}
+                    <section className="space-y-6">
+                        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+                            <PanelGrafik
+                                judul="Tren Publikasi Artikel"
+                                subjudul="Jumlah artikel dipublikasikan dalam 6 bulan terakhir"
+                                className="lg:col-span-2"
+                            >
+                                {adaData(artikelPerBulan) ? <BarChartVertical data={perBulan(artikelPerBulan)} /> : <Kosong />}
+                            </PanelGrafik>
+
+                            <PanelGrafik
+                                judul="Distribui Pengguna"
+                                subjudul="Rincian jumlah pengguna berdasarkan peranan"
+                            >
+                                <div className="divide-y divide-slate-100">
+                                    {Object.entries(userPerRole).map(([role, jumlah]) => (
+                                        <div key={role} className="flex items-center justify-between py-3 first:pt-0 last:pb-0">
+                                            <span className="text-xs font-medium text-slate-600">{roleLabel[role] ?? role}</span>
+                                            <span className="text-sm font-semibold text-slate-900">{jumlah.toLocaleString('id-ID')}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </PanelGrafik>
+                        </div>
+
+                        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+                            <PanelGrafik
+                                judul="Pendaftaran Pengguna Baru"
+                                subjudul="Pertumbuhan akun terdaftar 6 bulan terakhir"
+                                className="lg:col-span-2"
+                            >
+                                {adaData(userBaruPerBulan) ? <BarChartVertical data={perBulan(userBaruPerBulan)} /> : <Kosong />}
+                            </PanelGrafik>
+
+                            <PanelGrafik
+                                judul="Status Moderasi Komentar"
+                                subjudul="Distribusi status komentar di seluruh platform"
+                            >
+                                {Object.keys(komentarPerStatus).length > 0 ? (
+                                    <BarChartHorizontal
+                                        labelClass="w-24 text-xs"
+                                        data={['approved', 'pending', 'rejected'].map((s) => ({
+                                            label: statusLabel[s],
+                                            value: komentarPerStatus[s] ?? 0,
+                                        }))}
+                                    />
+                                ) : (
+                                    <Kosong />
+                                )}
+                            </PanelGrafik>
+                        </div>
+
+                        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                            <PanelGrafik
+                                judul="Artikel Terpopuler"
+                                subjudul="5 artikel dengan akumulasi pembaca (views) tertinggi"
+                            >
+                                {artikelTerpopuler.length > 0 ? (
+                                    <BarChartHorizontal
+                                        labelClass="w-36 text-xs truncate"
+                                        data={artikelTerpopuler.map((a) => ({ label: a.judul_artikel, value: a.views }))}
+                                    />
+                                ) : (
+                                    <Kosong />
+                                )}
+                            </PanelGrafik>
+
+                            <PanelGrafik
+                                judul="Cerita Fiksi Terpopuler"
+                                subjudul="5 cerita fiksi dengan tingkat pembaca terbanyak"
+                            >
+                                {ceritaTerpopuler.length > 0 ? (
+                                    <BarChartHorizontal
+                                        labelClass="w-36 text-xs truncate"
+                                        data={ceritaTerpopuler.map((c) => ({ label: c.judul_cerita, value: c.views }))}
+                                    />
+                                ) : (
+                                    <Kosong />
+                                )}
+                            </PanelGrafik>
+                        </div>
+
+                        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                            <PanelGrafik
+                                judul="Artikel per Kategori Topik"
+                                subjudul="Sebaran artikel berdasarkan taksonomi kategori"
+                            >
+                                {artikelPerKategori.length > 0 ? (
+                                    <BarChartHorizontal
+                                        labelClass="w-32 text-xs truncate"
+                                        data={artikelPerKategori.map((k) => ({ label: k.nama, value: k.jumlah }))}
+                                    />
+                                ) : (
+                                    <Kosong />
+                                )}
+                            </PanelGrafik>
+
+                            <PanelGrafik
+                                judul="Cerita Fiksi per Genre"
+                                subjudul="Sebaran cerita berdasarkan genre fiksi"
+                            >
+                                {ceritaPerGenre.length > 0 ? (
+                                    <BarChartHorizontal
+                                        labelClass="w-32 text-xs truncate"
+                                        data={ceritaPerGenre.map((g) => ({ label: g.genre, value: g.jumlah }))}
+                                    />
+                                ) : (
+                                    <Kosong />
+                                )}
+                            </PanelGrafik>
+                        </div>
+                    </section>
+
                 </div>
             </div>
         </AuthenticatedLayout>

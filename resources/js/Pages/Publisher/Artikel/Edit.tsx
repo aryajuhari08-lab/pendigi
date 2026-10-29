@@ -2,12 +2,12 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import InputError from '@/Components/InputError';
 import { Head, useForm } from '@inertiajs/react';
 import { useState } from 'react';
-import { CKEditor } from '@ckeditor/ckeditor5-react';
-import ClassicEditor from '@ckeditor/ckeditor5-build-classic';
+import EditorKonten from '@/Components/EditorKonten';
 
 interface KategoriOption {
     kategori_id: number;
     nama_kategori: string;
+    children?: { kategori_id: number; nama_kategori: string }[];
 }
 
 interface ArtikelData {
@@ -63,9 +63,24 @@ export default function Edit({ artikel, kategori }: { artikel: ArtikelData; kate
         if (file) setPreview(URL.createObjectURL(file));
     };
 
-    const kategoriTerpilih = kategori.find((k) => String(k.kategori_id) === data.kategori_id);
-    const isFiksi = kategoriTerpilih?.nama_kategori === 'Fiksi';
-    const isNonFiksi = kategoriTerpilih?.nama_kategori === 'Non Fiksi';
+    // Kategori terpilih bisa berupa kategori induk atau sub-kategorinya; keduanya dikenali
+    // supaya isian "Genre" dan label "Sumber" tetap sesuai untuk artikel di sub-kategori.
+    let namaKategoriTerpilih = '';
+    let namaIndukTerpilih = '';
+    for (const k of kategori) {
+        if (String(k.kategori_id) === data.kategori_id) {
+            namaKategoriTerpilih = k.nama_kategori;
+            break;
+        }
+        const sub = k.children?.find((c) => String(c.kategori_id) === data.kategori_id);
+        if (sub) {
+            namaKategoriTerpilih = sub.nama_kategori;
+            namaIndukTerpilih = k.nama_kategori;
+            break;
+        }
+    }
+    const isFiksi = namaKategoriTerpilih === 'Fiksi' || namaIndukTerpilih === 'Fiksi';
+    const isNonFiksi = namaKategoriTerpilih === 'Non Fiksi' || namaIndukTerpilih === 'Non Fiksi';
     const labelSumber = isNonFiksi ? 'Judul Buku / Sumber Referensi' : 'Sumber';
 
     const submit = (aksi: 'draft' | 'submit') => {
@@ -143,11 +158,16 @@ export default function Edit({ artikel, kategori }: { artikel: ArtikelData; kate
                                 className="w-full bg-[#faf7f8] px-3 py-2 text-sm text-gray-700 focus:outline-none"
                                 style={{ ...clipPanelSm, border: `1px solid ${BORDER}` }}
                             >
-                                {kategori.map((k) => (
+                                {kategori.flatMap((k) => [
                                     <option key={k.kategori_id} value={k.kategori_id}>
                                         {k.nama_kategori}
-                                    </option>
-                                ))}
+                                    </option>,
+                                    ...(k.children ?? []).map((sub) => (
+                                        <option key={sub.kategori_id} value={sub.kategori_id}>
+                                            &nbsp;&nbsp;↳ {sub.nama_kategori}
+                                        </option>
+                                    )),
+                                ])}
                             </select>
                             <InputError message={errors.kategori_id} className="mt-1 font-mono text-[11px]" />
                         </div>
@@ -214,12 +234,9 @@ export default function Edit({ artikel, kategori }: { artikel: ArtikelData; kate
                         <div>
                             <FieldLabel>Isi Artikel</FieldLabel>
                             <div style={{ ...clipPanelSm, border: `1px solid ${BORDER}`, overflow: 'hidden' }}>
-                                <CKEditor
-                                    editor={ClassicEditor}
-                                    data={data.isi_artikel}
-                                    onChange={(_event, editor) => {
-                                        setData('isi_artikel', editor.getData());
-                                    }}
+                                <EditorKonten
+                                    value={data.isi_artikel}
+                                    onChange={(html) => setData('isi_artikel', html)}
                                 />
                             </div>
                             <p className="mt-1 font-mono text-[10px] tracking-wider text-gray-400">

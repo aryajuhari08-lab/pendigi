@@ -34,7 +34,7 @@ class BabController extends Controller
             'aksi' => ['required', 'in:draft,submit'],
         ]);
 
-        $validated['isi_bab'] = clean($validated['isi_bab']);
+        $validated['isi_bab'] = \App\Support\KontenBersih::bersihkan($validated['isi_bab']);
 
         $nomorBerikutnya = ($cerita->bab()->max('nomor_bab') ?? 0) + 1;
 
@@ -72,7 +72,7 @@ class BabController extends Controller
             'aksi' => ['required', 'in:draft,submit'],
         ]);
 
-        $validated['isi_bab'] = clean($validated['isi_bab']);
+        $validated['isi_bab'] = \App\Support\KontenBersih::bersihkan($validated['isi_bab']);
 
         $bab->update([
             'judul_bab' => $validated['judul_bab'],

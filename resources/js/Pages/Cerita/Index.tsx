@@ -1,3 +1,6 @@
+import Lonceng from '@/Components/Lonceng';
+import Paginasi, { DataPaginasi } from '@/Components/Paginasi';
+import Avatar from '@/Components/Avatar';
 import { Head, Link, router } from '@inertiajs/react';
 import { FormEvent, useEffect, useRef, useState } from 'react';
 
@@ -23,13 +26,13 @@ interface CeritaItem {
     status_progres: 'berlangsung' | 'tamat';
     views: number;
     jumlah_bab: number;
-    penulis?: { nama_lengkap: string };
+    penulis?: { nama_lengkap: string; foto_profil?: string | null };
 }
 
 interface PageProps {
-    cerita: CeritaItem[];
+    cerita: DataPaginasi & { data: CeritaItem[] };
     filters: { search?: string; genre?: string };
-    auth: { user: { nama_lengkap: string; role: string } | null };
+    auth: { user: { nama_lengkap: string; role: string; foto_profil?: string | null } | null };
 }
 
 export default function Index({ cerita, filters, auth }: PageProps) {
@@ -105,7 +108,21 @@ export default function Index({ cerita, filters, auth }: PageProps) {
                         <div className="flex shrink-0 items-center gap-3 font-mono text-xs">
                             {auth.user ? (
                                 <>
-                                    <span className="hidden tracking-wide text-gray-500 sm:inline">{auth.user.nama_lengkap}</span>
+                                    <Lonceng />
+    <Link
+    href={route('pustaka.index')}
+    className="tracking-wider text-gray-500 hover:text-[#a8265c]"
+>
+    PUSTAKA
+</Link>
+<Link
+    href={route('profile.edit')}
+    title="Profil akun"
+    className="flex items-center gap-2 tracking-wide text-gray-500 hover:text-[#a8265c]"
+>
+    <Avatar nama={auth.user.nama_lengkap} foto={auth.user.foto_profil} size={28} />
+    <span className="hidden sm:inline">{auth.user.nama_lengkap}</span>
+</Link>
                                     {bisaKeDashboard && (
                                         <Link
                                             href={route('dashboard')}
@@ -161,7 +178,7 @@ export default function Index({ cerita, filters, auth }: PageProps) {
                     </div>
 
                     {/* Grid cerita */}
-                    {cerita.length === 0 ? (
+                    {cerita.data.length === 0 ? (
                         <div
                             className="mt-4 bg-white p-10 text-center font-mono text-xs text-gray-400"
                             style={{ ...clipPanel, border: '1px solid #e3c7d2' }}
@@ -170,7 +187,7 @@ export default function Index({ cerita, filters, auth }: PageProps) {
                         </div>
                     ) : (
                         <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-                            {cerita.map((item) => (
+                            {cerita.data.map((item) => (
                                 <Link
                                     key={item.cerita_id}
                                     href={route('cerita.show', item.cerita_id)}
@@ -189,6 +206,7 @@ export default function Index({ cerita, filters, auth }: PageProps) {
                                     <div className="flex flex-1 flex-col p-3">
                                         <p className="line-clamp-2 text-sm font-semibold text-gray-800">{item.judul_cerita}</p>
                                         <p className="mt-1 font-mono text-[10px] tracking-wider text-gray-400">
+                                            <Avatar nama={item.penulis?.nama_lengkap ?? '?'} foto={item.penulis?.foto_profil} size={18} className="mr-1.5 align-middle" />
                                             {item.penulis?.nama_lengkap ?? '-'}
                                         </p>
                                         <div className="mt-auto flex flex-wrap items-center gap-1.5 pt-2 font-mono text-[9px] tracking-wider">
@@ -207,6 +225,8 @@ export default function Index({ cerita, filters, auth }: PageProps) {
                             ))}
                         </div>
                     )}
+
+                    <Paginasi paginasi={cerita} satuan="cerita" />
                 </div>
             </div>
         </>

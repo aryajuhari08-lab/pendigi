@@ -42,7 +42,7 @@ class ArtikelController extends Controller
 
         // Bersihkan HTML dari isi CKEditor sebelum disimpan, cegah stored XSS
         // (script, onerror, javascript: dsb otomatis dibuang oleh HTMLPurifier).
-        $validated['isi_artikel'] = clean($validated['isi_artikel']);
+        $validated['isi_artikel'] = \App\Support\KontenBersih::bersihkan($validated['isi_artikel']);
 
         $path = null;
         if ($request->hasFile('gambar')) {
@@ -90,11 +90,16 @@ class ArtikelController extends Controller
             'aksi' => ['required', 'in:draft,submit'],
         ]);
 
-        $validated['isi_artikel'] = clean($validated['isi_artikel']);
+        $validated['isi_artikel'] = \App\Support\KontenBersih::bersihkan($validated['isi_artikel']);
 
         $path = $artikel->gambar;
         if ($request->hasFile('gambar')) {
             $path = $request->file('gambar')->store('artikel', 'public');
+
+            // Gambar lama dihapus setelah yang baru berhasil tersimpan, supaya file tidak menumpuk di server
+            if ($artikel->gambar) {
+                Storage::disk('public')->delete($artikel->gambar);
+            }
         }
 
         $artikel->update([

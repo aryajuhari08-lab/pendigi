@@ -99,7 +99,8 @@ export default function Index({ pengajuan }: { pengajuan: PengajuanItem[] }) {
                                         </button>
                                     </div>
                                 </div>
-                                <p className="mt-3 whitespace-pre-wrap text-sm text-gray-600">
+                                <p className="mt-3 font-mono text-[10px] tracking-wider text-gray-400">BIO & PENGALAMAN</p>
+                                <p className="mt-1 whitespace-pre-wrap text-sm text-gray-600">
                                     {linkifyTeks(item.portofolio_teks)}
                                 </p>
                                 {item.portofolio_file && (

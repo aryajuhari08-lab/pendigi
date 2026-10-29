@@ -47,6 +47,12 @@ class Cerita extends Model
     }
 
     // Helper: rata-rata rating cerita ini
+    // Relasi: daftar like (satu user maksimal satu like per cerita)
+    public function likeCerita()
+    {
+        return $this->hasMany(LikeCerita::class, 'cerita_id', 'cerita_id');
+    }
+
     public function rataRating()
     {
         return $this->ratingCerita()->avg('skor');

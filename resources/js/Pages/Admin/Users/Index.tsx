@@ -1,3 +1,4 @@
+import Avatar from '@/Components/Avatar';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, router } from '@inertiajs/react';
 
@@ -6,6 +7,7 @@ interface UserItem {
     nama_lengkap: string;
     email: string;
     role: string;
+    foto_profil: string | null;
     created_at: string;
 }
 
@@ -70,7 +72,12 @@ export default function Index({ users }: { users: UserItem[] }) {
                                     const badge = roleBadge(user.role);
                                     return (
                                         <tr key={user.user_id}>
-                                            <td className="px-4 py-3 font-medium">{user.nama_lengkap}</td>
+                                            <td className="px-4 py-3 font-medium">
+                                                <div className="flex items-center gap-3">
+                                                    <Avatar nama={user.nama_lengkap} foto={user.foto_profil} size={32} />
+                                                    <span>{user.nama_lengkap}</span>
+                                                </div>
+                                            </td>
                                             <td className="px-4 py-3 text-gray-500">{user.email}</td>
                                             <td className="px-4 py-3">
                                                 <select

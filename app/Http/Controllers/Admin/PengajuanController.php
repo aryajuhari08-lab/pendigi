@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\PengajuanPublisher;
+use App\Notifications\KeputusanModerasi;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -26,6 +27,8 @@ class PengajuanController extends Controller
         $pengajuan->update(['status' => 'approved']);
         $pengajuan->user()->update(['role' => 'publisher']);
 
+        $pengajuan->user->notify(KeputusanModerasi::pengajuan($pengajuan, true));
+
         return back()->with('success', "{$pengajuan->user->nama_lengkap} sekarang jadi Publisher.");
     }
 
@@ -39,6 +42,8 @@ class PengajuanController extends Controller
             'status' => 'rejected',
             'catatan_admin' => $request->catatan_admin,
         ]);
+
+        $pengajuan->user->notify(KeputusanModerasi::pengajuan($pengajuan, false));
 
         return back()->with('success', 'Pengajuan ditolak.');
     }

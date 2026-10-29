@@ -1,3 +1,6 @@
+import TombolSimpan from '@/Components/TombolSimpan';
+import { embedVideo } from '@/utils/embedVideo';
+import Avatar from '@/Components/Avatar';
 import { Head, Link, router } from '@inertiajs/react';
 import { FormEvent, useState } from 'react';
 
@@ -6,7 +9,7 @@ interface KomentarItem {
     komentar: string;
     create_at: string;
     user_id: number;
-    penulis?: { nama_lengkap: string };
+    penulis?: { nama_lengkap: string; foto_profil?: string | null };
     balasan?: KomentarItem[];
 }
 
@@ -20,7 +23,7 @@ interface ArtikelData {
     views: number;
     sumber: string;
     genre: string | null;
-    penulis?: { nama_lengkap: string };
+    penulis?: { nama_lengkap: string; foto_profil?: string | null };
     kategori?: { nama_kategori: string };
 }
 
@@ -37,6 +40,7 @@ interface PageProps {
     ratingAvg: number;
     ratingCount: number;
     sudahLike: boolean;
+    sudahBookmark: boolean;
     ratingSaya: number | null;
     isPenulis: boolean;
     artikelTerkait: ArtikelTerkaitItem[];
@@ -67,6 +71,7 @@ export default function Show({
     ratingAvg,
     ratingCount,
     sudahLike,
+    sudahBookmark,
     ratingSaya,
     artikelTerkait,
     auth,
@@ -163,6 +168,7 @@ export default function Show({
                                     </p>
                                     <h1 className="mt-2 text-2xl font-semibold text-gray-800">{artikel.judul_artikel}</h1>
                                     <p className="mt-1 text-sm text-gray-500">
+                                        <Avatar nama={artikel.penulis?.nama_lengkap ?? '?'} foto={artikel.penulis?.foto_profil} size={20} className="mr-1.5 align-middle" />
                                         oleh {artikel.penulis?.nama_lengkap}
                                         <span className="mx-1.5 text-gray-300">|</span>
                                         Sumber: {artikel.sumber}
@@ -170,7 +176,7 @@ export default function Show({
 
                                     <div
                                         className="prose prose-sm mt-4 max-w-none text-gray-700 prose-headings:text-gray-800 prose-a:text-[#a8265c] prose-strong:text-gray-800"
-                                        dangerouslySetInnerHTML={{ __html: artikel.isi_artikel }}
+                                        dangerouslySetInnerHTML={{ __html: embedVideo(artikel.isi_artikel) }}
                                     />
 
                                     <div className="mt-6 flex flex-wrap items-center gap-6 border-t pt-4" style={{ borderColor: accentBorder }}>
@@ -182,7 +188,9 @@ export default function Show({
                                             style={{ color: sudahLike ? accent : '#6b7280' }}
                                         >
                                             {sudahLike ? '♥' : '♡'} {likesCount} LIKE
-                                        </button>
+</button>
+
+<TombolSimpan rute="artikel.bookmark" id={artikel.artikel_id} sudahBookmark={sudahBookmark} isLoggedIn={!!auth.user} />
 
                                         <div className="flex items-center gap-1 font-mono text-xs">
                                             {[1, 2, 3, 4, 5].map((n) => (
@@ -254,7 +262,8 @@ export default function Show({
                                     )}
                                     {komentar.map((item) => (
                                         <div key={item.komentar_id} className="border-b pb-3 last:border-0" style={{ borderColor: '#f0dee5' }}>
-                                            <div className="flex items-baseline gap-2">
+                                            <div className="flex items-center gap-2">
+                                                <Avatar nama={item.penulis?.nama_lengkap ?? '?'} foto={item.penulis?.foto_profil} size={28} />
                                                 <p className="text-sm font-medium text-gray-800">
                                                     {item.penulis?.nama_lengkap}
                                                 </p>
@@ -302,7 +311,8 @@ export default function Show({
                                                 <div className="ml-4 mt-3 flex flex-col gap-2 border-l-2 pl-4" style={{ borderColor: '#f0dee5' }}>
                                                     {item.balasan.map((balasan) => (
                                                         <div key={balasan.komentar_id}>
-                                                            <div className="flex items-baseline gap-2">
+                                                            <div className="flex items-center gap-2">
+                                                                <Avatar nama={balasan.penulis?.nama_lengkap ?? '?'} foto={balasan.penulis?.foto_profil} size={22} />
                                                                 <p className="text-xs font-medium text-gray-700">
                                                                     {balasan.penulis?.nama_lengkap}{' '}
                                                                     {balasan.user_id === artikel.user_id && (

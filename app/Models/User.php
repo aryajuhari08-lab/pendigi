@@ -17,6 +17,7 @@ class User extends Authenticatable
         'nis',
         'password',
         'role',
+        'foto_profil',
     ];
 
     protected $hidden = [
@@ -62,6 +63,12 @@ class User extends Authenticatable
     public function ratingCerita()
     {
         return $this->hasMany(RatingCerita::class, 'user_id', 'user_id');
+    }
+
+    // Relasi: satu user bisa punya beberapa pengajuan publisher (mis. ditolak lalu mengajukan lagi)
+    public function pengajuanPublisher()
+    {
+        return $this->hasMany(PengajuanPublisher::class, 'user_id', 'user_id');
     }
 
     // Helper cek role

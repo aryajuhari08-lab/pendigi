@@ -21,19 +21,14 @@ export default function Register() {
     const { data, setData, post, processing, errors, reset } = useForm({
         nama_lengkap: '',
         email: '',
-        nis: '',
         password: '',
         password_confirmation: '',
-        role: 'reader',
-        portofolio_teks: '',
-        portofolio_file: null as File | null,
     });
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
 
         post(route('register'), {
-            forceFormData: true,
             onFinish: () => reset('password', 'password_confirmation'),
         });
     };
@@ -43,12 +38,8 @@ export default function Register() {
             <Head title="Register" />
 
             <form onSubmit={submit} className="flex flex-col gap-4">
-                <p className="font-mono text-[10px] tracking-wider text-gray-400">
-                    KHUSUS SISWA/WARGA SMKN 11 BANDUNG — NIS AKAN DICOCOKKAN DENGAN DATA SEKOLAH
-                </p>
-
                 <div>
-                    <FieldLabel>Nama Lengkap (sesuai data sekolah)</FieldLabel>
+                    <FieldLabel>Nama Lengkap</FieldLabel>
                     <input
                         id="nama_lengkap"
                         value={data.nama_lengkap}
@@ -65,27 +56,13 @@ export default function Register() {
                 </div>
 
                 <div>
-                    <FieldLabel>NIS</FieldLabel>
-                    <input
-                        id="nis"
-                        value={data.nis}
-                        onChange={(e) => setData('nis', e.target.value)}
-                        required
-                        className={inputClass}
-                        style={inputStyle}
-                    />
-                    {errors.nis && (
-                        <p className="mt-1 font-mono text-[11px]" style={{ color: ACCENT }}>{errors.nis}</p>
-                    )}
-                </div>
-
-                <div>
                     <FieldLabel>Email</FieldLabel>
                     <input
                         id="email"
                         type="email"
                         value={data.email}
                         autoComplete="username"
+                        placeholder="nama@gmail.com"
                         onChange={(e) => setData('email', e.target.value)}
                         required
                         className={inputClass}
@@ -95,66 +72,6 @@ export default function Register() {
                         <p className="mt-1 font-mono text-[11px]" style={{ color: ACCENT }}>{errors.email}</p>
                     )}
                 </div>
-
-                <div>
-                    <FieldLabel>Daftar Sebagai</FieldLabel>
-                    <select
-                        id="role"
-                        value={data.role}
-                        onChange={(e) => setData('role', e.target.value)}
-                        required
-                        className={inputClass}
-                        style={inputStyle}
-                    >
-                        <option value="reader">Reader (membaca artikel)</option>
-                        <option value="publisher">Publisher (menulis artikel)</option>
-                    </select>
-                    {errors.role && (
-                        <p className="mt-1 font-mono text-[11px]" style={{ color: ACCENT }}>{errors.role}</p>
-                    )}
-                </div>
-
-                {data.role === 'publisher' && (
-                    <div className="flex flex-col gap-4 border-l-2 pl-4" style={{ borderColor: BORDER }}>
-                        <p className="font-mono text-[10px] tracking-wider text-gray-400">
-                            AKUN AKAN AKTIF SEBAGAI READER DULU, MENUNGGU ADMIN MENINJAU PORTOFOLIO INI.
-                        </p>
-
-                        <div>
-                            <FieldLabel>Ceritakan Pengalaman Menulismu</FieldLabel>
-                            <textarea
-                                id="portofolio_teks"
-                                value={data.portofolio_teks}
-                                onChange={(e) => setData('portofolio_teks', e.target.value)}
-                                rows={4}
-                                placeholder="Contoh: pernah menulis di mading sekolah, blog pribadi, sertakan juga link karya kalau ada..."
-                                className={inputClass}
-                                style={inputStyle}
-                            />
-                            {errors.portofolio_teks && (
-                                <p className="mt-1 font-mono text-[11px]" style={{ color: ACCENT }}>
-                                    {errors.portofolio_teks}
-                                </p>
-                            )}
-                        </div>
-
-                        <div>
-                            <FieldLabel>Upload Contoh Tulisan (opsional, PDF/DOC, maks 2MB)</FieldLabel>
-                            <input
-                                id="portofolio_file"
-                                type="file"
-                                accept=".pdf,.doc,.docx"
-                                onChange={(e) => setData('portofolio_file', e.target.files?.[0] ?? null)}
-                                className="w-full text-sm"
-                            />
-                            {errors.portofolio_file && (
-                                <p className="mt-1 font-mono text-[11px]" style={{ color: ACCENT }}>
-                                    {errors.portofolio_file}
-                                </p>
-                            )}
-                        </div>
-                    </div>
-                )}
 
                 <div>
                     <FieldLabel>Password</FieldLabel>
@@ -191,6 +108,10 @@ export default function Register() {
                         </p>
                     )}
                 </div>
+
+                <p className="font-mono text-[10px] tracking-wider text-gray-400">
+                    AKUN BARU OTOMATIS JADI READER. INGIN MENULIS? AJUKAN JADI PUBLISHER DARI HALAMAN PROFIL SETELAH LOGIN.
+                </p>
 
                 <div className="mt-2 flex items-center justify-between">
                     <Link

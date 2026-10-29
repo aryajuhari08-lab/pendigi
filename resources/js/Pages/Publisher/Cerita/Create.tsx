@@ -24,7 +24,7 @@ function FieldLabel({ children }: { children: React.ReactNode }) {
 
 export default function Create({ genreOptions }: { genreOptions: string[] }) {
     const [preview, setPreview] = useState<string | null>(null);
-    const { data, setData, post, processing, errors } = useForm<{
+    const { data, setData, post, transform, processing, errors } = useForm<{
         judul_cerita: string;
         sinopsis: string;
         genre: string;
@@ -49,7 +49,8 @@ export default function Create({ genreOptions }: { genreOptions: string[] }) {
     };
 
     const submit = (aksi: 'draft' | 'submit') => {
-        setData('aksi', aksi);
+        // aksi diisi lewat transform supaya ikut terkirim di request yang sama (setData bersifat async)
+        transform((currentData) => ({ ...currentData, aksi }));
         post(route('publisher.cerita.store'), { forceFormData: true });
     };
 

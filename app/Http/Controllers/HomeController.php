@@ -7,6 +7,7 @@ use App\Models\Banner;
 use App\Models\Kategori;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use App\Support\Pustaka;
 use Inertia\Response;
 
 class HomeController extends Controller
@@ -14,7 +15,7 @@ class HomeController extends Controller
     public function index(Request $request): Response
     {
         $artikel = Artikel::published()
-            ->with(['kategori', 'penulis'])
+            ->with(['kategori', 'penulis:user_id,nama_lengkap,foto_profil'])
             ->when($request->search, function ($query, $search) {
                 $query->where(function ($q) use ($search) {
                     $q->where('judul_artikel', 'like', "%{$search}%")
@@ -30,7 +31,9 @@ class HomeController extends Controller
             })
             ->withCount(['likes', 'rating'])
             ->latest('tanggal_publikasi')
-            ->get();
+            ->orderByDesc('artikel_id') // urutan tetap stabil walau tanggalnya sama, supaya tidak ada artikel ganda/hilang antar halaman
+            ->paginate(12)
+            ->withQueryString();
 
         return Inertia::render('Home', [
             'artikel' => $artikel,
@@ -40,6 +43,8 @@ class HomeController extends Controller
                 ->get(['kategori_id', 'nama_kategori']),
             'banner' => Banner::aktif()->get(['banner_id', 'judul', 'deskripsi', 'gambar', 'link_url']),
             'filters' => $request->only('search', 'kategori'),
+            // Baris "Lanjutkan membaca" untuk user yang login (4 terbaru); tamu tidak punya riwayat.
+            'lanjutBaca' => $request->user() ? Pustaka::riwayat($request->user()->user_id, 4) : [],
         ]);
     }
 }
