@@ -1,0 +1,17 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "permission": {
+    "edit": "ask",
+    "bash": {
+      "*": "ask",
+      "git status*": "allow",
+      "git diff*": "allow",
+      "php artisan route:list*": "allow"
+    },
+    "read": {
+      "*": "allow",
+      ".env": "deny",
+      ".env.*": "deny"
+    }
+  }
+}
